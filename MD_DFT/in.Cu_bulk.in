@@ -1,0 +1,49 @@
+#模型基本设置
+units 		metal
+boundary 	p p p
+atom_style 	atomic
+timestep 0.005
+neighbor 0.6 bin
+neigh_modify every 5 delay 0 check yes
+#为计算Cu（111）面表面能，对晶体取向进行重定义
+lattice 	fcc 3.61 orient x 1 1 -2 orient y -1 1 0 orient z 1 1 1
+region		box block 0 5 0 5 0 40
+#生成box和Cu原子
+create_box 	1 box
+create_atoms 1 box
+#势函数设置，采用eam势
+pair_style eam/alloy
+pair_coeff * * Cu_zhou.eam.alloy Cu
+#定义上下两个边界区域
+region boundary1 block INF INF INF INF 29.9 INF
+region boundary2 block INF INF INF INF INF 9.9
+group boundary1 region boundary1
+group boundary2 region boundary2
+group boundary union boundary1 boundary2
+#删除边界原子，相当于在Cu的上下两端形成一个真空层，消除上下端面之间的作用力
+delete_atoms group boundary
+#计算势能和动能
+compute 3 all pe/atom
+compute 4 all ke/atom
+#输出设置
+thermo 50
+dump 1 all custom 100 dump.atom id xs ys zs c_3 c_4
+#能量最小化
+min_style sd
+minimize 1.0e-30 1.0e-15 10000 10000
+#系统达到平衡后，输出势能E，即E0
+variable E equal pe
+print "---------------------- E0=$E---------------------------"
+run 0
+#定义上下区域，目的是把晶体切为上下两部分
+region down block INF INF INF INF INF 19.94
+region up block INF INF INF INF 19.95 INF
+group up region up
+group down region down
+#此处与源文件不同，将box在z方向上的尺寸改为80，扩大1倍
+change_box all z final 0 80 units lattice 
+#将上部分原子沿z轴移动40个晶格
+displace_atoms up move 0 0 40 units lattice
+#第二次进行能量最小化，并输出新的势能E1
+minimize 1.0e-30 1.0e-20 10000 100000
+print "--------------E1=$E--------------------------------"

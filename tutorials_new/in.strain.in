@@ -1,0 +1,46 @@
+# To relax metal bulk
+units metal
+dimension 3
+boundary p p p
+
+variable lowtemp equal 1.0 # room temperature
+
+# read data
+atom_style atomic
+read_data strain.lmp
+
+# inter-atomic potential
+neighbor              2.0 bin
+neigh_modify          delay 10 check yes
+pair_style eam/alloy
+pair_coeff * * Cu_zhou.eam.alloy Cu
+timestep  0.001
+
+# outputs
+thermo 100
+thermo_style custom step temp press pe vol lx ly lz
+
+# mixing
+minimize  1.0e-8 1.0e-8 10000 10000
+velocity  all create ${lowtemp} 5812775 dist gaussian
+
+reset_timestep 0
+
+# dump mydump all atom 2000  dump.lammpstrj
+# dump_modify mydump element Cu
+# write_dump all xyz all.xyz  modify element Cu
+
+# run   1000
+velocity all set 0.0 0.0 NULL
+fix  1 all setforce 0.0 0.0 NULL
+fix   2 all npt temp ${lowtemp} ${lowtemp} 0.1  z 0.0 0.0 1.0
+run   1000
+unfix   1
+unfix   2
+
+
+write_data opt_strain.data
+# simulation finished
+print 'All done (*^-^*)'
+
+
