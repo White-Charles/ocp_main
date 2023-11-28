@@ -1,0 +1,12 @@
+README.md
+setup.py
+ocpre/__init__.py
+ocpre/dealcar.py
+ocpre/other.py
+ocpre/plotmodel.py
+ocpre/strain.py
+ocpre/strain_matrix.py
+ocpre.egg-info/PKG-INFO
+ocpre.egg-info/SOURCES.txt
+ocpre.egg-info/dependency_links.txt
+ocpre.egg-info/top_level.txt

@@ -15,4 +15,5 @@ setup(
     description="Machine learning models for use in catalysis as part of the Open Catalyst Project",
     url="https://github.com/White-Charles/ocp_main/tree/main",
     packages=find_packages(),
+    include_package_data=True,
 )
