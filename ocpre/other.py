@@ -30,4 +30,4 @@ def exist_folder(judge_folder_path, is_creat=False):
         os.makedirs(judge_folder_path)
         print(f"folder '{judge_folder_path}' is created")
     else:
-        raise FileNotFoundError(f"folder '{judge_folder_path}' does not exist")
+        raise FileNotFoundError(f"folder '{judge_folder_path}' does not exist, make sure the calculation has ended")
