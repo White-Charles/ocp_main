@@ -10,9 +10,9 @@ from vaspvis import standard
 from ase.io import write, read
 from ase.constraints import FixAtoms, FixCartesian
 
-def write_atoms(filename, atoms, format="vasp"):
+def write_atoms(filename, atoms, format="vasp", isp=False):
     # 该函数的作用是修正 ase 的 write 函数，可以输出固定特定原子自由度的约束
-    write(filename, atoms, format="vasp")
+    write(filename, atoms, format=format)
     if not any(
         isinstance(constraint, FixCartesian)
         for constraint in atoms.constraints
@@ -34,59 +34,74 @@ def write_atoms(filename, atoms, format="vasp"):
                 info[i] = result_list
     # write part
     newdata = joint(data, mbox, mnum, mdata, info)
-    write_message(newdata, filename=filename)  # 输出poscar
+    write_message(newdata, filename=filename,isp=isp)  # 输出poscar
     write(filename, read(filename), format="vasp")  # 读写检验
     return "write FixCartesian"
 
-
-def out_poscar(input, path="New_Folder"):  # sourcery skip: extract-method
+def out_poscar(input, path="New_Folder", isp=False):
     # 如果文件夹已经存在，则删除该文件夹及其中的内容
     if os.path.exists(path):
         shutil.rmtree(path)
     # 创建新的文件夹
     os.makedirs(path)
-    if isinstance(input, list):
-        print("input is list")
+
+    if isinstance(input, dict):
+        if isp:
+            print("input is dict")
         all_model = input
-        for i in range(len(all_model)):
-            atoms = all_model[i]
-            filepath = os.path.join(".", path, str(int(i + 1e3)))
-            os.makedirs(filepath)
-            filename = os.path.join(filepath, "POSCAR")
-            write_atoms(filename, atoms, format="vasp")
-    elif isinstance(input, dict):
-        print("input is dict")
-        all_model = input
-        name = all_model.keys()
-        for key in name:
-            atoms = all_model[key]
-            filepath = os.path.join(".", path, key)
-            os.makedirs(filepath)
-            filename = os.path.join(filepath, "POSCAR")
-            write_atoms(filename, atoms, format="vasp")
+    elif isinstance(input, list):
+        if isp:
+            print("input is list")
+        all_model = {str(index+1e3): value for index, value in enumerate(input)}    
+    elif isinstance(input, np.ndarray):
+        if isp:
+            print("input is ndarray")
+        all_model = {str(index+1e3): value for index, value in enumerate(input)}
     elif isinstance(input, Atoms):
-        print("input is Atoms")
+        if isp:
+            print("input is Atoms")
         atoms = input
         filepath = path
         filename = os.path.join(filepath, "POSCAR")
-        write_atoms(filename, atoms, format="vasp")
+        write_atoms(filename, atoms, format="vasp", isp=isp)
     else:
-        raise ValueError("input must be a list or dict or Atoms")
+        raise ValueError("input must be a list or dict or np.ndarray or atoms")
+    
+    if isinstance(input, Atoms) == False:
+        for key in all_model.keys():
+            atoms = all_model[key]
+            filepath = os.path.join(".", path, key)
+            os.makedirs(filepath)                                                                                       
+            filename = os.path.join(filepath, "POSCAR")
+            write_atoms(filename, atoms, format="vasp",isp=isp)
 
-def out_car_list(input, path="New_Folder"):
+def out_car_list(input, path="New_Folder", isp=False):
     # 这个函数中嵌套了out_poscar，所以实际输出是嵌套文件夹
     # 如果文件夹已经存在，则删除该文件夹及其中的内容
     if os.path.exists(path):
         shutil.rmtree(path)
     # 创建新的文件夹
     os.makedirs(path)
-    if isinstance(input, list):
-        for i in range(len(input)):
-            filepath = os.path.join(".", path, str(int(i + 1e3)))
-            os.makedirs(filepath)
-            out_poscar(input[i], path=filepath)
+    
+    if isinstance(input, dict):
+        if isp:
+            print("all input is dict")
+        all_model = input
+    elif isinstance(input, list):
+        if isp:
+            print("all input is list")
+        all_model = {str(index+1e3): value for index, value in enumerate(input)}    
+    elif isinstance(input, np.ndarray):
+        if isp:
+            print("all input is ndarray")
+        all_model = {str(index+1e3): value for index, value in enumerate(input)}
     else:
-        raise ValueError("input must be a list")
+        raise ValueError("input must be a list or dict or np.ndarray")
+    
+    for key in all_model.keys():
+        filepath = os.path.join(".", path, key)
+        os.makedirs(filepath)
+        out_poscar(all_model[key], path=filepath, isp=isp)
 
 def get_dos_data(
     dos_folder, atom_num=6, orbital_list=list(range(9)), erange=[-8, 8],no_plot=True
@@ -130,7 +145,26 @@ def get_energy(OSZICAR_file, num=-1):
     e0_value = float(e0_value)
     return e0_value
 
-def read_one_car(path, car="CONTCAR"):
+def get_force(OUTCAR_file):
+    with open(OUTCAR_file, 'r') as file:
+        data = file.read()
+    # 找到起始和结束标识符的行号
+    start = 'TOTAL-FORCE (eV/Angst)'
+    end = 'total drift'
+    lines = data.split('\n')
+    for i, line in enumerate(lines):
+        if start in line:
+            start_line = i + 2
+        if end in line:
+            end_line = i - 1
+    # 提取数据部分
+    extracted_data = '\n'.join(lines[start_line:end_line]).strip()
+    # 将提取的数据转换成 np 数组
+    force = np.array([list(map(float, line.split())) for line in extracted_data.split('\n')])
+    force = force[:,3:]
+    return(force)
+
+def read_one_car(path, car="CONTCAR", isp=False):
     """
     可以从path中读取指定类型的文件，path是计算文件夹
     支持文件类型： car='CONTCAR' or 'POSCAR' or 'OSZICAR' or 'DOSCAR
@@ -161,12 +195,15 @@ def read_one_car(path, car="CONTCAR"):
             )  # 可以指定要读取OSZICAR中的第几个离子步的能量
         elif "DOSCAR" in car:
             atom = get_dos_data(path)
+        elif "OUTCAR" in car:
+            atom = get_force(filename)
         else:
             atom = read(filename, format="vasp")
-    print(filename)
+    if isp:
+        print(filename)
     return (atom)
 
-def read_car(path, car="CONTCAR"):
+def read_car(path, car="CONTCAR",isp=False):
     """
     可以从path中读取指定类型的文件，path是列表文件夹的父文件夹
     返回值是一个列表和一个字典，当子文件夹的名字是数字时，会返回升序排列好的列表和字典
@@ -183,12 +220,7 @@ def read_car(path, car="CONTCAR"):
         'OSZICAR' return Energy of type float.64
         'DOSCAR' return array of type np.array
     """
-
-    # if type(car) == list:
-    #     num = car[1]
-    #     car = car[0]
-    # else:
-    #     num = -1
+    
     all_list = []
     all_dict = {}
     subfolders = [
@@ -196,19 +228,7 @@ def read_car(path, car="CONTCAR"):
     ]
     for subfolder in subfolders:
         folder_path = os.path.join(path, subfolder)
-        atom = read_one_car(folder_path, car)
-        # filename = os.path.join(folder_path, car)
-        # if os.path.isfile(filename):
-        #     if "OSZICAR" in car:
-        #         atom = (
-        #             get_energy(filename, num=num)
-        #             if num != None
-        #             else get_energy(filename)
-        #         )  # 可以指定要读取OSZICAR中的第几个离子步的能量
-        #     elif "DOSCAR" in car:
-        #         atom = get_dos_data(folder_path)
-        #     else:
-        #         atom = read(filename, format="vasp")
+        atom = read_one_car(folder_path, car, isp=isp)
         all_list.append(atom)
         all_dict[subfolder] = atom
     if all(key.isdigit() for key in all_dict):  # 如果键的值都是数字，依据数字顺序调整列表和字典
@@ -220,7 +240,7 @@ def read_car(path, car="CONTCAR"):
     print('1st' ,all_dict.keys())
     return (all_list, all_dict)
 
-def read_cars(source_folder, car="CONTCAR"):
+def read_cars(source_folder, car="CONTCAR",isp=False):
     atoms_l = []
     atoms_d = {}
     atoms_d0 = {}  # 中间变量
@@ -233,7 +253,7 @@ def read_cars(source_folder, car="CONTCAR"):
     for subfolder in subfolders:
         
         subfolder_path = os.path.join(source_folder, subfolder)
-        atom_l, atom_d = read_car(subfolder_path, car=car)
+        atom_l, atom_d = read_car(subfolder_path, car=car,isp=isp)
         atoms_l.extend(atom_l)
         atoms_d[subfolder] = atom_d  # 字典存字典
         atoms_d0[subfolder] = atom_l  # 字典存列表，用于排序列表
@@ -296,12 +316,13 @@ def strs(mess):
     num = np.array(num)
     return num, info
 
-def write_message(message, filename="POSCAR"):
+def write_message(message, filename="POSCAR", isp=False):
     # 写入poscar
     with open(filename, "w") as f:
         for line in message:
             f.write(line + "\n")
-    print(f"write ------ {filename}")
+    if isp:
+        print(f"write ------ {filename}")
 
 def joint(data, mbox, mnum, mdata, info):
     # 将各部分组合
@@ -331,3 +352,39 @@ def tostr(number_matrix):
         line = " ".join(newline)
         string_matrix.append(line)
     return string_matrix
+
+def array2dict(arr):
+    '''
+    可以将一个矩阵，转成一个字典，输入可以是多维字典，那么输出是嵌套矩阵
+    '''
+
+    dict_arr = arr.copy()
+    if isinstance(dict_arr, np.ndarray):
+        while dict_arr.shape != ():
+            shape = dict_arr.shape
+            dict_arr = [dict(zip([str(i+1000) for i in range(shape[-1])], row)) for row in dict_arr.reshape((-1, shape[-1]))]
+            dict_arr = np.array(dict_arr).reshape(shape[:-1])
+        dict_data = dict_arr.tolist()
+    
+    elif isinstance(dict_arr, list):
+        dict_data = {}
+        for i, item in enumerate(dict_arr):
+            dict_data[str(i+1000)] = list_to_nested_dict(item)
+            
+    return(dict_data)
+
+def list_to_nested_dict(lst):
+    if not isinstance(lst, list):
+        return lst
+
+    dict_data = {}
+    for i, item in enumerate(lst):
+        dict_data[str(i+1000)] = list_to_nested_dict(item)
+    
+    return dict_data
+
+def dict2list(nested_dict):
+    if isinstance(nested_dict, dict):
+        return [dict2list(value) for value in nested_dict.values()]
+    else:
+        return nested_dict

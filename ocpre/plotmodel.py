@@ -77,7 +77,7 @@ def plot_model(model):
         plt.show()
 
 
-def plot_top(model_set, column=3):
+def plot_top(model_set, column=3,radii=None):
     num = len(model_set)
     row = math.ceil(num / column)
     fig, axs = plt.subplots(row, column, dpi=600)
@@ -89,10 +89,10 @@ def plot_top(model_set, column=3):
             # print(adslab.cell)
             axs[i].set_aspect("equal")
             plot_atoms(
-                model, axs[i], radii=0.8, rotation=("0x,0y,0z")
+                model, axs[i], radii=radii, rotation=("0x,0y,0z")
             )  # the "rotation" value is the  rotation angle of the axis
-            axs[i].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 2)
-            axs[i].set_ylim(-1, model.cell[1, 1] + 2)
+            axs[i].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 3)
+            axs[i].set_ylim(-1, model.cell[1, 1] + 3)
     else:
         for i in range(num):
             a = math.floor(i / column)
@@ -102,8 +102,8 @@ def plot_top(model_set, column=3):
             # print(adslab.cell)
             axs[a, b].set_aspect("equal")
             plot_atoms(
-                model, axs[a, b], radii=0.8, rotation=("0x,0y,0z")
+                model, axs[a, b], radii=radii, rotation=("0x,0y,0z")
             )  # the "rotation" value is the  rotation angle of the axis
-            axs[a, b].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 2)
-            axs[a, b].set_ylim(-1, model.cell[1, 1] + 2)
+            axs[a, b].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 3)
+            axs[a, b].set_ylim(-1, model.cell[1, 1] + 3)
     plt.show()

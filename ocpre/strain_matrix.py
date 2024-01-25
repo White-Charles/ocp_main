@@ -11,7 +11,6 @@ def poisson_disc_3d(box, num, isplot=False):
     box = np.array(box)
     dims3d = box[:, 1] - box[:, 0]
     cut = ((dims3d[0] * dims3d[1] * dims3d[2]) / 4 / num) ** (1 / 3)
-    # print('cutoff=',cut)
     points3d = pdis.Bridson_sampling(dims3d, radius=cut)
     sort = list(range(len(points3d)))
     random.shuffle(sort)
@@ -94,9 +93,10 @@ def test_dict_plot(data_dict):
         z_coords = [data_dict[key][2] for key in data_dict]
     elif isinstance(data_dict, np.ndarray):
         print("Input is array")
-        x_coords = data_dict[:, 0]
-        y_coords = data_dict[:, 1]
-        z_coords = data_dict[:, 2]
+        data_dict = data_dict.reshape(-1,3)
+        x_coords = list(data_dict[:, 0])
+        y_coords = list(data_dict[:, 1])
+        z_coords = list(data_dict[:, 2])
     else:
         raise ValueError("Input not supported")
 

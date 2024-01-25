@@ -25,15 +25,17 @@ def move_to_mid(slab):
         raise TypeError("Model should be Atoms")
     return(atom)
 
-def cal_strain(ini_atoms, pre_atoms, isprint=True):
-    # 函数用于计算应变，变形前模型：ini_atoms, 变形后模型：pre_atoms，两个模型的属性是 ase.atoms.Atoms，
-    # 如果两个模型不是Atoms(Type Error)，或者不具有应变变换(Value Error)，会提示错误。
+def cal_strain(ini_atoms, pre_atoms, isprint=False):
+    '''
+    函数用于计算应变，变形前模型：ini_atoms, 变形后模型：pre_atoms，两个模型的属性是 ase.atoms.Atoms，
+    如果两个模型不是Atoms(Type Error)，或者不具有应变变换(Value Error)，会提示错误。    
+    '''
 
     isAtoms = isinstance(ini_atoms, Atoms) + isinstance(pre_atoms, Atoms)
-    len_queal = len(ini_atoms.positions) == len(pre_atoms.positions)
-    if isAtoms * len_queal == 0:
+    # len_queal = len(ini_atoms.positions) == len(pre_atoms.positions)
+    if isAtoms != 2:
         print("Two model are Atoms:", isAtoms == 2)
-        print("Two models with equal atomic numbers :", len_queal == 1)
+        # print("Two models with equal atomic numbers :", len_queal == 1)
         raise TypeError("Model should be Atoms")
     ini_cor = ini_atoms.cell.array
     pre_cor = pre_atoms.cell.array
@@ -44,7 +46,7 @@ def cal_strain(ini_atoms, pre_atoms, isprint=True):
         print("strain: \n", E)
     return E
 
-def opt_strain(bulk, strain, iscal=True):
+def opt_strain(bulk, strain, iscal=False):
 
     # 在bulk上施加应变
     strain_bulk = bulk.copy()

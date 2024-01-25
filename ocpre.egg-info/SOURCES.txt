@@ -1,9 +1,13 @@
 README.md
 setup.py
 ocpre/__init__.py
+ocpre/adslab.py
+ocpre/alloy.py
 ocpre/dealcar.py
+ocpre/graph.py
 ocpre/other.py
 ocpre/plotmodel.py
+ocpre/set_con.py
 ocpre/strain.py
 ocpre/strain_matrix.py
 ocpre.egg-info/PKG-INFO
