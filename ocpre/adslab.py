@@ -6,7 +6,9 @@ from ase.io import  read
 from ase.atoms import Atoms
 from ase.build import add_adsorbate, molecule, fcc111
 from ase.constraints import FixAtoms, FixCartesian
-from ocpre import read_one_car, set_cons2, cal_LBFGC, array2dict, dict2list, set_cons1, opt_strain, vac_ext, write_atoms
+from ocpre import read_one_car, set_cons2, cal_LBFGC, array2dict, dict2list, set_cons1, opt_strain, vac_ext, write_atoms, point_position, sort_z, fix_layers
+
+
 
 def int_bulk(path):
     CONT = read_one_car(path)
@@ -55,7 +57,8 @@ def get_bulk_set(onebulk, strain_matrix):
     bulk_matrix = np.apply_along_axis(strain_load, axis=-1, arr=strain_matrix) 
     bulk_matrix = get_Atoms_vector(bulk_matrix[...,0])
     bulk_list = bulk_matrix.tolist()
-    return bulk_list
+    bulk_dict = array2dict(bulk_list)
+    return bulk_list, bulk_dict
 
 
 def operate(src_file, dest_file):
@@ -216,7 +219,7 @@ def get_atom_adsmodel(adslab,mask,order=None):
         
     atom_model_dict = dict(zip(order, atom_model_cala))
     
-    return(atom_model_cala , atom_model_dict)
+    return (atom_model_cala , atom_model_dict)
 
 def get_top3d_rotate(adslab, top3d_index):
     tags = adslab.get_tags()

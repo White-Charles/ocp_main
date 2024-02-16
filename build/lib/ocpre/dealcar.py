@@ -52,11 +52,11 @@ def out_poscar(input, path="New_Folder", isp=False):
     elif isinstance(input, list):
         if isp:
             print("input is list")
-        all_model = {str(index+1e3): value for index, value in enumerate(input)}    
+        all_model = {str(int(index+1e3)): value for index, value in enumerate(input)}    
     elif isinstance(input, np.ndarray):
         if isp:
             print("input is ndarray")
-        all_model = {str(index+1e3): value for index, value in enumerate(input)}
+        all_model = {str(int(index+1e3)): value for index, value in enumerate(input)}
     elif isinstance(input, Atoms):
         if isp:
             print("input is Atoms")
@@ -90,11 +90,11 @@ def out_car_list(input, path="New_Folder", isp=False):
     elif isinstance(input, list):
         if isp:
             print("all input is list")
-        all_model = {str(index+1e3): value for index, value in enumerate(input)}    
+        all_model = {str(int(index+1e3)): value for index, value in enumerate(input)}    
     elif isinstance(input, np.ndarray):
         if isp:
             print("all input is ndarray")
-        all_model = {str(index+1e3): value for index, value in enumerate(input)}
+        all_model = {str(int(index+1e3)): value for index, value in enumerate(input)}
     else:
         raise ValueError("input must be a list or dict or np.ndarray")
     
@@ -290,7 +290,7 @@ def deal_message(message):
     # 处理读取的文本
     mbox, _ = strs(message[2:5])
     mnum, _ = strs(message[6])
-    mnum = [[int(element) for element in row] for row in mnum]
+    mnum = [[int(float(element)) for element in row] for row in mnum]
     num, info = strs(message[9 : sum(mnum[0]) + 9])
     mdata = num[:, 0:3]
     return mbox, mnum, mdata, info

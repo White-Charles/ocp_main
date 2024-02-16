@@ -4,18 +4,17 @@ import numpy as np
 from ocpre import point_position, sort_z, fix_layers
 from ase.data import chemical_symbols
 
-def get_alloy_slab(adslab0, reatoms_str, ):
-    pos = adslab0.get_positions()
-    cell = adslab0.get_cell()
+def get_alloy_slab(slab, reatoms_str, ):
+    pos = slab.get_positions()
+    cell = slab.get_cell()
     # anum = np.array([int(n) for n in adslab0.get_atomic_numbers()])
-    an = adslab0.get_atomic_numbers()
+    an = slab.get_atomic_numbers()
     tri = [point_position(cell[0], cell[1], posi[:2])for posi in pos]
     tri = [tri[i] and sort_z(pos[:,2])[i]==5 for i in range(len(tri))]
 
     # 要将Cu 29 替换成Cr 24，Co 27， Pt 78
 
     reatoms = [chemical_symbols.index(a) for a in reatoms_str]
-    # reatoms_str = ['Cr','Co', 'Pt']
     reatoms_for_cycle = reatoms.copy()
     reatoms_for_cycle.extend(reatoms)
     alloy_slab_l = []
@@ -38,12 +37,12 @@ def get_alloy_slab(adslab0, reatoms_str, ):
                     an3[0] = an3[0]-29 # 巧妙地减去了Cu的序号
                     an3 = np.sum(an3, axis=0)
                     intan[tri] = an3
-                    test0 = adslab0.copy()
+                    test0 = slab.copy()
                     test0.set_atomic_numbers(intan)
                     con = {(-1,-1,-1):[-1,-2]} # 约束，除了表面和次表面其他层都约束
                     test0 = fix_layers(test0, fixed_atoms_layers=con)
                     alloy_slab_l.append(test0)
-                    
                     asd = '_'.join(map(str, [i,j,k]))
                     alloy_slab_d[asd] = test0
-    return alloy_slab_d
+                    
+    return alloy_slab_l, alloy_slab_d

@@ -47,6 +47,13 @@ def plot_model(model):
         axs[2].set_xlim(-1, cell[1, 1] + 3)
         axs[2].set_ylim(-1, cell[2, 2] + 3)
         axs[2].set_title("Side view", fontsize=10)
+        
+        for i in range(3):
+            axs[i].set_xticks([])  # 关闭x轴的刻度
+            axs[i].set_yticks([])  # 关闭y轴的刻度
+            axs[i].set_xticklabels([])  # 关闭x轴的数字
+            axs[i].set_yticklabels([])  # 关闭y轴的数字
+
         plt.show()
     else:
         cell = model.get_cell()
@@ -74,6 +81,13 @@ def plot_model(model):
         axs[2].set_xlim(-5, cell[0, 0] + cell[1, 0])
         axs[2].set_ylim(-1, cell[2, 2] + 3)
         axs[2].set_title("Side view", fontsize=10)
+        
+        for i in range(3):
+            axs[i].set_xticks([])  # 关闭x轴的刻度
+            axs[i].set_yticks([])  # 关闭y轴的刻度
+            axs[i].set_xticklabels([])  # 关闭x轴的数字
+            axs[i].set_yticklabels([])  # 关闭y轴的数字
+            
         plt.show()
 
 
@@ -93,6 +107,10 @@ def plot_top(model_set, column=3,radii=None):
             )  # the "rotation" value is the  rotation angle of the axis
             axs[i].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 3)
             axs[i].set_ylim(-1, model.cell[1, 1] + 3)
+            axs[i].set_xticks([])  # 关闭x轴的刻度
+            axs[i].set_yticks([])  # 关闭y轴的刻度
+            axs[i].set_xticklabels([])  # 关闭x轴的数字
+            axs[i].set_yticklabels([])  # 关闭y轴的数字
     else:
         for i in range(num):
             a = math.floor(i / column)
@@ -106,4 +124,9 @@ def plot_top(model_set, column=3,radii=None):
             )  # the "rotation" value is the  rotation angle of the axis
             axs[a, b].set_xlim(-1, model.cell[0, 0] + model.cell[1, 0] + 3)
             axs[a, b].set_ylim(-1, model.cell[1, 1] + 3)
+            
+            axs[a, b].set_xticks([])  # 关闭x轴的刻度
+            axs[a, b].set_yticks([])  # 关闭y轴的刻度
+            axs[a, b].set_xticklabels([])  # 关闭x轴的数字
+            axs[a, b].set_yticklabels([])  # 关闭y轴的数字
     plt.show()

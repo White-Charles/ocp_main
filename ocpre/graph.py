@@ -169,5 +169,4 @@ def point_position(line_point1, line_point2, point3):
 
         # 计算第三个点的纵坐标
         y3 = line_point1[1] + slope * (point3[0] - line_point1[0])
-
-        return point3[1] > y3
+        return point3[1] > y3*(1+1E-3)
