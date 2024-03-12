@@ -129,4 +129,13 @@ def plot_top(model_set, column=3,radii=None):
             axs[a, b].set_yticks([])  # 关闭y轴的刻度
             axs[a, b].set_xticklabels([])  # 关闭x轴的数字
             axs[a, b].set_yticklabels([])  # 关闭y轴的数字
-    plt.show()
+            
+        # 处理最后一行的剩余子图
+        remaining = column-b-1   # 计算最后一行剩余的子图数量
+        # print(remaining)
+        if remaining > 0:  # 如果剩余子图数量大于0
+            for j in range(remaining):  # 遍历这些剩余的子图
+                # print([a, b+1+j])
+                axs[a, b+1+j].clear()
+                axs[a, b+1+j].axis("off")
+        plt.show()

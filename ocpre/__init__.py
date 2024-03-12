@@ -7,6 +7,7 @@ from .dealcar import (
     read_cars,
     array2dict,
     dict2list,
+    get_dos_atom_orbitals,
 )
 
 from .strain import (
@@ -41,6 +42,7 @@ from .graph import (
     dict_values_to0,
     get_predata,
     point_position,
+    atom2graph,
 )
 
 from .set_con import (
@@ -69,6 +71,7 @@ from .adslab import (
 
 from .alloy import (
     get_alloy_slab,
+    get_strain_alloy_slabs,
 
 )
 

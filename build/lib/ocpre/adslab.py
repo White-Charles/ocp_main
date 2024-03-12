@@ -293,7 +293,7 @@ def get_molecule_adslab(adslab, mol):
 
 def get_strain_adslab(mol_rotate_dic, strain_slabs_d2, sort_nei):
     strain_slabs_l2 = dict2list(strain_slabs_d2)
-    strain_adslab = []
+    strain_adslab_l = []
     for i, (key, mol_refer) in enumerate(mol_rotate_dic.items()):  # 取出来一个无应变的吸附基底
         print(key)
         # strain_slab_0 = strain_slabs_d2[str(i + 1000)]
@@ -322,5 +322,6 @@ def get_strain_adslab(mol_rotate_dic, strain_slabs_d2, sort_nei):
             )
             sslab_model.set_constraint([cons0, cons1])  # 在之前约束基础上约束了两个
             strain_adslabk.append(sslab_model)
-        strain_adslab.append(strain_adslabk)
-    return (strain_adslab)
+        strain_adslab_l.append(strain_adslabk)
+    strain_adslab_d = array2dict(strain_adslab_l)
+    return (strain_adslab_l, strain_adslab_d)

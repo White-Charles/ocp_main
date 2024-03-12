@@ -1,0 +1,2 @@
+model_checkpoint_path: "GCN_model_weightas"
+all_model_checkpoint_paths: "GCN_model_weightas"

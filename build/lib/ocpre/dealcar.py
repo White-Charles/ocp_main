@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from ase.atoms import Atoms
+from vaspvis.dos import Dos
 from vaspvis import standard
 from ase.io import write, read
 from ase.constraints import FixAtoms, FixCartesian
@@ -103,32 +104,6 @@ def out_car_list(input, path="New_Folder", isp=False):
         os.makedirs(filepath)
         out_poscar(all_model[key], path=filepath, isp=isp)
 
-def get_dos_data(
-    dos_folder, atom_num=6, orbital_list=list(range(9)), erange=[-8, 8],no_plot=True
-):  
-    # print(dos_folder)
-    # 该函数可以获得指定文件夹的dos信息
-    # 默认是POSCAR的第七个原子（atom_num=6），9个轨道，能量范围[-11,11]eV
-    dos_data = standard.dos_atom_orbitals(
-        atom_orbital_dict={atom_num: orbital_list},
-        folder=dos_folder,
-        erange=[erange[0]-1, erange[1]+1],
-        total=False,
-        save=False,
-        figsize=[5, 3],
-    )
-    figure, axe = dos_data
-    if no_plot:
-        plt.close(figure)  # 关闭图像显示，不在命令行中展示
-    x0 = axe.lines[0].get_data()[0]
-    x = x0[(x0 > erange[0]) & (x0 <= erange[1])]
-    dos_data = np.zeros((len(x), len(orbital_list) + 1))
-    dos_data[:, 0] = x
-    for i in range(len(orbital_list)):
-        y = axe.lines[i].get_data()[-1]
-        y = y[(x0 > erange[0]) & (x0 <= erange[1])]
-        dos_data[:, i + 1] = y
-    return dos_data
 
 def get_energy(OSZICAR_file, num=-1):
     # 该函数可以获得OSZICAR文件中的能量值，如果存在的话
@@ -179,26 +154,29 @@ def read_one_car(path, car="CONTCAR", isp=False):
         'OSZICAR' return Energy of type float.64
         'DOSCAR' return array of type np.array
     """
-
+    # print(path)
     if type(car) == list:
         num = car[1]
         car = car[0]
     else:
-        num = -1  
-    filename = os.path.join(path, car)
-    if os.path.isfile(filename):
-        if "OSZICAR" in car:
-            atom = (
-                get_energy(filename, num=num)
-                if num != None
-                else get_energy(filename)
-            )  # 可以指定要读取OSZICAR中的第几个离子步的能量
-        elif "DOSCAR" in car:
-            atom = get_dos_data(path)
-        elif "OUTCAR" in car:
-            atom = get_force(filename)
-        else:
-            atom = read(filename, format="vasp")
+        num = -1 
+    if callable(car): # 如果car是一个函数
+        atom = car(path)
+    else:
+        filename = os.path.join(path, car)
+        if os.path.isfile(filename):
+            if "OSZICAR" in car:
+                atom = (
+                    get_energy(filename, num=num)
+                    if num != None
+                    else get_energy(filename)
+                )  # 可以指定要读取OSZICAR中的第几个离子步的能量
+            elif "DOSCAR" in car:
+                atom = get_dos_data(path)
+            elif "OUTCAR" in car:
+                atom = get_force(filename)
+            else:
+                atom = read(filename, format="vasp")
     if isp:
         print(filename)
     return (atom)
@@ -277,6 +255,71 @@ def read_cars(source_folder, car="CONTCAR",isp=False):
     print("2nd", atoms_d.keys())
     return (atoms_l, atoms_d)
 
+def get_dos_data(
+    dos_folder, atom_num=[6], orbital_list=list(range(9)), erange=[-8, 8],no_plot=True
+):  
+    # print(dos_folder)
+    # 该函数可以获得指定文件夹的dos信息
+    # 默认是POSCAR的第七个原子（atom_num=6），9个轨道，能量范围[-11,11]eV
+    atom_orbital_dict = {}
+    for i in atom_num:
+        atom_orbital_dict[i] = orbital_list
+    print(atom_orbital_dict)
+    dos_data = standard.dos_atom_orbitals(
+        atom_orbital_dict=atom_orbital_dict,
+        folder=dos_folder,
+        erange=[erange[0]-1, erange[1]+1],
+        total=False,
+        save=False,
+        figsize=[5, 3],
+    )
+    figure, axe = dos_data
+    if no_plot:
+        plt.close(figure)  # 关闭图像显示，不在命令行中展示
+    x0 = axe.lines[0].get_data()[0]
+    x = x0[(x0 > erange[0]) & (x0 <= erange[1])]
+    dos_data = np.zeros((len(x), len(orbital_list) + 1))
+    dos_data[:, 0] = x
+    for i in range(len(orbital_list)):
+        y = axe.lines[i].get_data()[-1]
+        y = y[(x0 > erange[0]) & (x0 <= erange[1])]
+        dos_data[:, i + 1] = y
+    return dos_data
+
+def get_dos_atom_orbitals(
+    folder,
+    atoms,
+    erange=[-8.0, 8.0],
+    spin="up",
+    combination_method="add",
+    shift_efermi=0,
+):
+    """
+    This function plots the orbital projected density of states on specific atoms.
+
+    Parameters:
+        folder (str): This is the folder that contains the VASP files
+        atom_orbital_dict (dict[int:list]): A dictionary that contains the individual atoms and the corresponding
+            orbitals to project onto. For example, if the user wants to project onto the s, py, pz, and px orbitals
+            of the first atom and the s orbital of the second atom then the dictionary would be {0:[0,1,2,3], 1:[0]}
+        combination_method (str): If spin == 'both', this determines if the spin up and spin down
+            desnities are added or subtracted. ('add' or 'sub')
+    Returns:
+        dos(np.array): 
+    """
+    # 这是一个修改的函数，抛弃了其中绘图的部分，保留了其中提取数据的部分
+    
+    dos = Dos(
+        shift_efermi=shift_efermi,
+        folder=folder,
+        spin=spin,
+        combination_method=combination_method,
+    )
+    
+    dos_data = dos.pdos_array[:,atoms,:]
+    c = dos.tdos_array[:,0]
+    indices = np.where((c > erange[0]) & (c <= erange[-1]))
+    return(c[indices], dos_data[indices])
 
 # 处理POSCAR函数模块
 def read_message(filename):
